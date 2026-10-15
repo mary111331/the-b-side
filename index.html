@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17110e">
+<title>The B Side</title>
+<meta name="description" content="The B Side: a small made-up room where the quiet tracks live.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Special+Elite&display=swap">
+<style>
+:root{--hand:"Caveat","Bradley Hand","Segoe Print",cursive;--type:"Special Elite","American Typewriter","Courier New",monospace}
+html,body{margin:0;height:100%;background:#17110e;color:#f3e6d0;overflow:hidden;-webkit-tap-highlight-color:transparent;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#room{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hot{cursor:pointer}
+.hand{font-family:var(--hand)}
+.type{font-family:var(--type)}
+#caption{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);width:max-content;max-width:min(90vw,520px);text-align:center;font:600 21px/1.2 var(--hand);color:#f6e7cc;background:rgba(20,14,10,.78);padding:8px 16px;border-radius:14px;transition:opacity .6s;pointer-events:none}
+#caption.hide{opacity:0}
+#sheet{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(8,5,3,.62);opacity:0;pointer-events:none;transition:opacity .3s;padding:20px;z-index:5}
+#sheet.open{opacity:1;pointer-events:auto}
+#paper{background:#f4ecda;color:#2a211b;max-width:360px;width:100%;padding:20px 22px 18px;border-radius:3px;box-shadow:0 14px 44px rgba(0,0,0,.55);transform:rotate(-1.5deg) translateY(14px);transition:transform .3s;background-image:repeating-linear-gradient(transparent 0 29px,rgba(80,120,170,.22) 29px 30px)}
+#sheet.open #paper{transform:rotate(-1.5deg)}
+#paper .tag{font:13px/1.4 var(--type);letter-spacing:.1em;text-transform:uppercase;color:#9b3b2e}
+#paper .txt{font:600 28px/1.07 var(--hand);margin:8px 0 14px;white-space:pre-line}
+#paper .small{font:13px/1.4 var(--type);color:#7a6a5a;margin:0 0 14px}
+#paper button{font:15px/1 var(--type);background:#2a211b;color:#f4ecda;border:0;border-radius:999px;padding:12px 20px;cursor:pointer}
+@keyframes spin{to{transform:rotate(360deg)}}
+#recSpin{transform-origin:150px 745px}
+#recSpin.on{animation:spin 1.8s linear infinite}
+#recFlip{transform-origin:150px 745px;transition:transform .3s ease-in}
+#recFlip.flat{transform:scaleX(0)}
+#arm{transform-origin:265px 665px;transition:transform 1s ease-in-out}
+#arm.down{transform:rotate(35deg)}
+@keyframes fall{from{transform:translate(0,0)}to{transform:translate(-18px,276px)}}
+#rainMove{animation:fall .75s linear infinite}
+#rain,#glassDrops{transition:opacity 1.2s}
+.off{opacity:0}
+@keyframes blink{0%,60%{opacity:1}61%,100%{opacity:.08}}
+.blink{animation:blink 2.2s steps(1) infinite}
+@keyframes twinkle{0%,100%{opacity:.9}50%{opacity:.25}}
+.tw{animation:twinkle 3.5s ease-in-out infinite}
+@keyframes shoot{0%{opacity:0;transform:translate(0,0)}15%{opacity:1}100%{opacity:0;transform:translate(-80px,44px)}}
+.shoot{animation:shoot 1s ease-out forwards}
+@keyframes steam{0%{opacity:0;transform:translate(0,10px)}30%{opacity:.5}100%{opacity:0;transform:translate(4px,-34px)}}
+.steam{animation:steam 3.6s ease-out infinite}
+@keyframes pulse{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:.95;transform:scale(1.15)}}
+.hint{animation:pulse 2s ease-in-out infinite;transform-box:fill-box;transform-origin:center;pointer-events:none}
+#chalk,#tint,#dark,#light,#bulbGlow{transition:opacity .9s}
+#tint,#dark,#light,#bulbGlow,#hints{pointer-events:none}
+.marble{transition:transform .55s cubic-bezier(.3,1.4,.5,1)}
+.card{transition:transform .2s}
+</style>
+</head>
+<body>
+<svg id="room" viewBox="0 0 600 900" preserveAspectRatio="xMidYMid meet" role="img" aria-label="The B Side, a small room at night with a record player, a lamp, a window, a corkboard and a jar">
+<defs>
+  <linearGradient id="wallG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b2a22"/><stop offset="1" stop-color="#291c16"/></linearGradient>
+  <pattern id="paperP" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M14 0v28" stroke="rgba(255,225,190,.035)" stroke-width="7"/><circle cx="0" cy="14" r="1.3" fill="rgba(255,225,190,.07)"/></pattern>
+  <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1430"/><stop offset=".6" stop-color="#1d2a4c"/><stop offset="1" stop-color="#46395a"/></linearGradient>
+  <linearGradient id="deskG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a4e2f"/><stop offset="1" stop-color="#4f311d"/></linearGradient>
+  <radialGradient id="lampG"><stop offset="0" stop-color="#ffd28c" stop-opacity=".42"/><stop offset=".45" stop-color="#ffbf73" stop-opacity=".16"/><stop offset="1" stop-color="#ffb060" stop-opacity="0"/></radialGradient>
+  <radialGradient id="glowG"><stop offset="0" stop-color="#fff0c4" stop-opacity=".9"/><stop offset="1" stop-color="#ffd27a" stop-opacity="0"/></radialGradient>
+  <radialGradient id="moonG"><stop offset="0" stop-color="#f6eed6" stop-opacity=".35"/><stop offset="1" stop-color="#f6eed6" stop-opacity="0"/></radialGradient>
+  <pattern id="corkP" width="9" height="9" patternUnits="userSpaceOnUse"><rect width="9" height="9" fill="#b48655"/><circle cx="2" cy="3" r="1" fill="#9c6f43"/><circle cx="6.5" cy="7" r=".8" fill="#c99a68"/></pattern>
+  <clipPath id="skyClip"><rect x="67" y="100" width="206" height="276"/></clipPath>
+  <clipPath id="jarClip"><rect x="355" y="383" width="68" height="67" rx="14"/></clipPath>
+  <mask id="darkMask" maskUnits="userSpaceOnUse" x="-1200" y="-600" width="3000" height="2200"><rect x="-1200" y="-600" width="3000" height="2200" fill="#fff"/><rect x="67" y="100" width="206" height="276" fill="#000"/></mask>
+</defs>
+
+<!-- wall -->
+<rect x="-1200" y="-600" width="3000" height="1200" fill="#3b2a22"/>
+<rect x="-1200" y="0" width="3000" height="900" fill="url(#wallG)"/>
+<rect x="-1200" y="-600" width="3000" height="1200" fill="url(#paperP)"/>
+<text x="300" y="50" text-anchor="middle" class="type" font-size="26" letter-spacing="6" fill="#f0dcb8">THE B SIDE</text>
+<text x="300" y="74" text-anchor="middle" class="hand" font-size="20" fill="#f0dcb8" opacity=".7">a small room, after hours</text>
+
+<!-- window -->
+<g id="win" class="hot">
+  <rect x="55" y="88" width="230" height="300" rx="4" fill="#4a2d1b" stroke="#2a1910" stroke-width="2"/>
+  <g clip-path="url(#skyClip)">
+    <rect x="67" y="100" width="206" height="276" fill="url(#skyG)"/>
+    <g id="stars"></g>
+    <circle cx="228" cy="142" r="30" fill="url(#moonG)"/>
+    <circle cx="228" cy="142" r="13" fill="#f4ecd2"/>
+    <circle cx="223" cy="139" r="2.4" fill="#e2d8bc"/><circle cx="232" cy="147" r="1.6" fill="#e2d8bc"/>
+    <g id="shooting"></g>
+    <g fill="none" stroke="#0a0d18" stroke-width="3"><path d="M240 330V196"/><path d="M198 198H272"/><path d="M208 198L240 176L262 198" stroke-width="1.5"/><path d="M214 199v36" stroke-width="1"/></g>
+    <circle cx="240" cy="174" r="2.6" fill="#ff4a3a" class="blink"/>
+    <path fill="#0a0d18" d="M67,376 L67,318 L85,318 L85,304 L99,304 L99,326 L111,326 L111,286 L131,286 L131,326 L141,326 L141,300 L157,300 L157,312 L171,312 L171,282 L179,282 L179,272 L185,272 L185,282 L193,282 L193,312 L209,312 L209,292 L231,292 L231,320 L245,320 L245,304 L257,304 L257,330 L273,330 L273,376 Z"/>
+    <g id="lights"></g>
+    <g id="rain"><g id="rainMove"></g></g>
+    <g id="glassDrops"></g>
+    <path d="M67 200 L150 100 L178 100 L67 236 Z" fill="#fff" opacity=".035"/>
+  </g>
+  <rect x="167" y="100" width="6" height="276" fill="#4a2d1b"/>
+  <rect x="67" y="234" width="206" height="6" fill="#4a2d1b"/>
+  <rect x="45" y="386" width="250" height="14" rx="2" fill="#5a3820"/>
+  <!-- plant on the sill -->
+  <g>
+    <path d="M246 340c-14-22-8-40 2-48c2 16 4 30-2 48z" fill="#5f8a4a"/>
+    <path d="M252 342c4-24 18-34 30-34c-6 14-14 28-30 34z" fill="#6f9c55"/>
+    <path d="M249 344c-10-12-26-14-34-10c10 8 22 12 34 10z" fill="#557d42"/>
+    <path d="M251 340c0-20 4-34 10-42c2 14 0 28-10 42z" fill="#7aa860"/>
+    <path d="M236 352h32l-4 34h-24z" fill="#b0603a"/><rect x="233" y="348" width="38" height="7" rx="2" fill="#c26c42"/>
+  </g>
+</g>
+
+<!-- corkboard -->
+<rect x="328" y="98" width="236" height="256" rx="4" fill="#5a3820" stroke="#2a1910" stroke-width="2"/>
+<rect x="338" y="108" width="216" height="236" fill="url(#corkP)"/>
+<g id="cards"></g>
+
+<!-- shelf, jar, books -->
+<rect x="318" y="452" width="256" height="12" rx="2" fill="#6b4429"/>
+<path d="M338 464h10l-10 18z M548 464h10v18z" fill="#4a2d1b"/>
+<g>
+  <rect x="470" y="392" width="16" height="60" fill="#7a2e2a"/><rect x="488" y="400" width="14" height="52" fill="#2f4d5c"/>
+  <rect x="504" y="386" width="18" height="66" fill="#c9a35a"/><rect x="524" y="404" width="12" height="48" fill="#4a5a3a"/>
+  <path d="M540 452l18-56l10 4l-18 52z" fill="#8a5a7a"/>
+  <path d="M474 404h8M474 410h8M508 398h10M508 404h10" stroke="rgba(255,240,210,.35)" stroke-width="1.5"/>
+</g>
+<g id="jar" class="hot">
+  <rect x="352" y="380" width="74" height="72" rx="16" fill="rgba(210,235,255,.08)"/>
+  <g id="marbles" clip-path="url(#jarClip)"></g>
+  <rect x="352" y="380" width="74" height="72" rx="16" fill="none" stroke="rgba(235,245,255,.45)" stroke-width="2"/>
+  <path d="M362 392 q-4 22 2 46" stroke="rgba(255,255,255,.35)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <rect x="356" y="370" width="66" height="12" rx="3" fill="#8a6a4a"/>
+  <path d="M420 376 q12 4 14 14" stroke="#d9cbb0" stroke-width="1" fill="none"/>
+  <g transform="rotate(9 452 400)"><rect x="430" y="389" width="46" height="22" rx="2" fill="#efe4cc"/><text id="jarTag" x="453" y="405" text-anchor="middle" class="hand" font-size="16" fill="#3a2a1e">kept: 0</text></g>
+  <rect x="345" y="362" width="95" height="95" fill="transparent"/>
+</g>
+
+<!-- poster -->
+<g transform="rotate(-3 120 475)">
+  <rect x="62" y="432" width="118" height="88" fill="#e9dcc0"/>
+  <rect x="100" y="426" width="40" height="12" fill="rgba(240,230,190,.6)"/>
+  <text x="121" y="462" text-anchor="middle" class="type" font-size="16" fill="#8a2f25">OPEN LATE</text>
+  <text x="121" y="486" text-anchor="middle" class="hand" font-size="20" fill="#3a2a1e">quiet tracks</text>
+  <text x="121" y="507" text-anchor="middle" class="hand" font-size="20" fill="#3a2a1e">only</text>
+</g>
+
+<!-- chalk, side B only -->
+<g id="chalk" opacity="0" class="hand" fill="rgba(250,245,235,.82)" font-size="25">
+  <text x="196" y="456">nothing in</text>
+  <text x="196" y="482">here has to</text>
+  <text x="196" y="508">be finished</text>
+  <g fill="none" stroke="rgba(250,245,235,.75)" stroke-width="2" stroke-linecap="round">
+    <path d="M286 418l4 10l10 1l-8 6l3 10l-9-6l-9 6l3-10l-8-6l10-1z"/>
+    <path d="M246 522q-14 40-58 70"/><path d="M188 592l14-2M188 592l4-13"/>
+    <path d="M78 552l2 6l6 1l-5 4l2 6l-5-4l-5 4l2-6l-5-4l6-1z"/>
+  </g>
+  <text x="254" y="552" font-size="19">flip it back</text>
+</g>
+
+<!-- desk -->
+<rect x="-1200" y="596" width="3000" height="304" fill="url(#deskG)"/>
+<rect x="-1200" y="899" width="3000" height="700" fill="#4f311d"/>
+<rect x="-1200" y="590" width="3000" height="10" fill="#3a2416"/>
+<path d="M0 640q150-10 300 6t300-4M0 720q200 12 340-4t260 8M0 870q180-14 360 2t240-6" stroke="rgba(40,20,10,.25)" stroke-width="2" fill="none"/>
+
+<!-- record player -->
+<rect x="38" y="628" width="264" height="228" rx="12" fill="#2e2622" stroke="#120d0a" stroke-width="3"/>
+<rect x="46" y="636" width="248" height="212" rx="8" fill="none" stroke="rgba(255,255,255,.06)"/>
+<circle cx="150" cy="745" r="97" fill="#5c5c5c"/>
+<circle cx="150" cy="745" r="94" fill="#2c2c2c"/>
+<g id="rec" class="hot">
+  <g id="recFlip"><g id="recSpin">
+    <circle cx="150" cy="745" r="90" fill="#0f0f0f"/>
+    <g id="grooves" fill="none" stroke="rgba(255,255,255,.055)"></g>
+    <circle id="labelC" cx="150" cy="745" r="30" fill="#d9a441"/>
+    <text x="150" y="731" text-anchor="middle" class="type" font-size="7" letter-spacing="1" fill="#2a1a10">THE B SIDE</text>
+    <text id="labelT" x="150" y="756" text-anchor="middle" class="type" font-size="26" fill="#2a1a10">A</text>
+    <text id="labelS" x="150" y="767" text-anchor="middle" class="hand" font-size="9" fill="#2a1a10">open late</text>
+    <circle cx="150" cy="745" r="3" fill="#cfcfcf"/>
+  </g></g>
+  <path d="M92 700 A72 72 0 0 1 208 700" stroke="rgba(255,255,255,.07)" stroke-width="12" fill="none"/>
+  <circle cx="150" cy="745" r="92" fill="transparent"/>
+</g>
+<rect x="56" y="826" width="26" height="14" rx="3" fill="#4a403a"/><text x="69" y="836" text-anchor="middle" font-size="9" fill="#cdbfae" class="type">33</text>
+<rect x="88" y="826" width="26" height="14" rx="3" fill="#3a322d"/><text x="101" y="836" text-anchor="middle" font-size="9" fill="#8a7d70" class="type">45</text>
+<circle id="playLed" cx="280" cy="836" r="3.5" fill="#3a1a14"/>
+<g id="armHit" class="hot">
+  <g id="arm">
+    <path d="M265 665L262 640" stroke="#9a9a9a" stroke-width="4"/>
+    <circle cx="262" cy="638" r="7" fill="#555"/>
+    <path d="M265 665L275 795" stroke="#c4c4c4" stroke-width="4" stroke-linecap="round"/>
+    <rect x="268" y="792" width="14" height="22" rx="2" fill="#222" transform="rotate(-4 275 803)"/>
+  </g>
+  <circle cx="265" cy="665" r="14" fill="#6a6a6a" stroke="#2a2a2a" stroke-width="2"/>
+  <circle cx="265" cy="665" r="5" fill="#a0a0a0"/>
+  <rect x="244" y="626" width="52" height="200" fill="transparent"/>
+</g>
+
+<!-- mug -->
+<g>
+  <path class="steam" d="M362 636q-8-12 0-24q8-12 0-24" stroke="rgba(255,245,230,.5)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path class="steam" style="animation-delay:1.2s" d="M376 638q8-12 0-24q-8-12 0-24" stroke="rgba(255,245,230,.45)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path class="steam" style="animation-delay:2.4s" d="M369 640q-6-12 2-22q8-12 0-22" stroke="rgba(255,245,230,.4)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <rect x="391" y="671" width="18" height="18" rx="7" fill="none" stroke="#d9cfc2" stroke-width="6"/>
+  <circle cx="370" cy="680" r="27" fill="#d9cfc2" stroke="#a89b8a" stroke-width="2"/>
+  <circle cx="370" cy="680" r="21" fill="#3a2214"/>
+  <ellipse cx="363" cy="673" rx="7" ry="3" fill="rgba(255,255,255,.18)" transform="rotate(-25 363 673)"/>
+</g>
+
+<!-- notebook -->
+<g id="book" class="hot" transform="rotate(-5 480 790)">
+  <rect x="392" y="728" width="176" height="124" rx="3" fill="#efe6d2" stroke="#bfb197"/>
+  <path d="M480 728v124" stroke="#bfb197" stroke-width="2"/>
+  <path d="M400 772h72M400 788h72M400 804h72M400 820h72M400 836h72M488 756h72M488 772h72M488 788h72M488 804h72M488 820h72M488 836h72" stroke="rgba(80,120,170,.25)"/>
+  <text x="402" y="758" class="hand" font-size="20" fill="#2a211b">liner notes</text>
+  <path d="M402 784q10-6 20 0t20 0t18-2M402 800q14-5 26 0t22-2M402 816q8-4 18 0t16 0M490 768q12-5 24 0t24-1M490 784q10-5 20 0t20 1t16-2M490 800q12-4 22 0" stroke="#4a3c30" stroke-width="1.4" fill="none"/>
+  <path d="M500 846l60-30l6 6l-60 30z" fill="#e2b33c"/><path d="M500 846l6 6l-10 2z" fill="#3a2a1e"/>
+</g>
+
+<!-- lamp -->
+<g id="lamp" class="hot">
+  <ellipse cx="540" cy="652" rx="38" ry="10" fill="#1d1d1d"/>
+  <path d="M540 648L566 560L490 522" stroke="#2b2b2b" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="566" cy="560" r="5" fill="#444"/><circle cx="540" cy="648" r="4" fill="#444"/>
+  <path d="M482 506L510 528L490 566Q464 568 446 548Z" fill="#7a2f25" stroke="#3a140f" stroke-width="2"/>
+  <path d="M500 532l-4 6" stroke="#c9a35a" stroke-width="2"/>
+  <circle id="bulb" cx="466" cy="559" r="7" fill="#ffe7a8"/>
+  <path d="M512 532v40" stroke="#bbb" stroke-width="1"/><circle cx="512" cy="575" r="3" fill="#c9a35a"/>
+  <rect x="436" y="494" width="150" height="166" fill="transparent"/>
+</g>
+
+<!-- light and mood layers -->
+<rect id="tint" x="-1200" y="-600" width="3000" height="2200" fill="#4b2a6e" opacity="0"/>
+<rect id="dark" x="-1200" y="-600" width="3000" height="2200" fill="#06040a" opacity=".28" mask="url(#darkMask)"/>
+<ellipse id="light" cx="410" cy="700" rx="300" ry="230" fill="url(#lampG)" opacity="1"/>
+<circle id="bulbGlow" cx="466" cy="559" r="34" fill="url(#glowG)" opacity=".8"/>
+<g id="hints"></g>
+</svg>
+
+<div id="caption" class="hide" aria-live="polite"></div>
+<div id="sheet" role="dialog" aria-modal="true"><div id="paper"><div class="tag" id="pTag"></div><div class="txt" id="pTxt"></div><p class="small" id="pSmall"></p><button id="pBtn" type="button">Okay</button></div></div>
+
+<script>
+(()=>{
+const NS='http://www.w3.org/2000/svg',$=id=>document.getElementById(id);
+const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e};
+const pr=i=>{const s=Math.sin(i*12.9898+4.1)*43758.5453;return s-Math.floor(s)};
+const store={get(k,d){try{const v=localStorage.getItem('bside.'+k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('bside.'+k,JSON.stringify(v))}catch(e){}}};
+
+// ---------- scenery ----------
+const stars=$('stars');
+for(let i=0;i<46;i++){const c=el('circle',{cx:(70+pr(i)*200).toFixed(1),cy:(103+pr(i+99)*190).toFixed(1),r:(.5+pr(i+7)*1.1).toFixed(2),fill:'#fff6e0'},stars);if(i%3===0){c.setAttribute('class','tw');c.style.animationDelay=(pr(i+3)*3.5).toFixed(2)+'s'}}
+const B=[[67,318,18],[85,304,14],[99,326,12],[111,286,20],[131,326,10],[141,300,16],[157,312,14],[171,282,22],[193,312,16],[209,292,22],[231,320,14],[245,304,12],[257,330,16]];
+const lights=[];let li=0;
+B.forEach(([x,top,w])=>{for(let y=top+6;y<370;y+=8)for(let xx=x+3;xx<x+w-3;xx+=6){li++;if(pr(li+300)<.3)lights.push(el('rect',{x:xx,y:y,width:2.2,height:3,fill:'#f6c46a',opacity:(.5+pr(li)*.5).toFixed(2)},$('lights')))}});
+setInterval(()=>{const l=lights[Math.floor(Math.random()*lights.length)];if(l)l.setAttribute('opacity',l.getAttribute('opacity')==='0'?'0.8':'0')},1600);
+const rm=$('rainMove');
+for(let i=0;i<70;i++){const x=60+pr(i+500)*230,y=100+pr(i+600)*276;[[x,y],[x+18,y-276]].forEach(([a,b])=>el('line',{x1:a.toFixed(1),y1:b.toFixed(1),x2:(a-3).toFixed(1),y2:(b+12).toFixed(1),stroke:'rgba(190,210,255,.33)','stroke-width':1},rm))}
+for(let i=0;i<14;i++)el('circle',{cx:(72+pr(i+800)*196).toFixed(1),cy:(106+pr(i+900)*262).toFixed(1),r:(1+pr(i+950)*1.6).toFixed(1),fill:'rgba(220,235,255,.28)'},$('glassDrops'));
+const gr=$('grooves');for(let r=38;r<=87;r+=4.5)el('circle',{cx:150,cy:745,r:r},gr);
+
+// ---------- words ----------
+const CARDS={
+ A:[['A1','Every record has a side nobody asked for.\nThis room is that side.'],
+    ['A2','Draft 41.\nThe chorus is fine. The silence right before it is better.'],
+    ['A3','Things worth keeping: the crackle before a song, rain on a window at 2 a.m., a joke that lands half a second late.'],
+    ['A4','House rule:\nnothing in here has to be finished.'],
+    ['?','Blank on this side.\nWhatever goes here is on the other side of the record.']],
+ B:[['B1','For whoever stays until the lights come on.'],
+    ['B2','Instrumental.\nSome things are better without words.'],
+    ['B3','One take.\nThe mistakes stayed in. They\u2019re the best part.'],
+    ['B4','Three minutes of rain and a radiator ticking.\nThirteen seconds of quiet at the end, for luck.'],
+    ['B5','Hidden track.\nYou found it. Thanks for coming down the back stairs.']]};
+const NOTES=['Recorded at night, mostly. Daylight is too sure of itself.',
+ 'Track order matters less than the gaps between the tracks.',
+ 'Favourite sound: a needle finding the groove. A tiny landing.',
+ 'If a song makes you stop walking, it\u2019s a good song. That\u2019s the whole review.',
+ 'Things that are better slightly wrong: piano, handwriting, laughing.',
+ 'Mixing note: leave the hiss in. It proves the room was real.',
+ 'Nobody puts the hit on a B side. That\u2019s why it\u2019s allowed to be strange.',
+ 'Played the new one to the plant. The plant had no notes.',
+ 'Today\u2019s rule: one more listen before deciding.',
+ 'The best part of a record is the second you lower the needle and nothing has happened yet.'];
+
+// ---------- cards ----------
+const CPOS=[[345,118,92,62,-4],[452,126,92,62,3],[350,202,92,62,2],[458,212,90,62,-3],[402,280,92,56,1]];
+const cardLabels=[];
+CPOS.forEach(([x,y,w,h,r],i)=>{
+ const g=el('g',{class:'hot card',transform:`rotate(${r} ${x+w/2} ${y+h/2})`},$('cards'));
+ el('rect',{x:x+2,y:y+3,width:w,height:h,fill:'rgba(0,0,0,.25)'},g);
+ el('rect',{x:x,y:y,width:w,height:h,fill:i===4?'#e9e0f0':'#f3ead8'},g);
+ el('path',{d:`M${x+8} ${y+30}h${w-16}M${x+8} ${y+40}h${w-16}M${x+8} ${y+50}h${w-26}`,stroke:'rgba(80,60,40,.22)','stroke-width':1.4},g);
+ cardLabels.push(el('text',{x:x+10,y:y+22,class:'type','font-size':14,fill:'#8a2f25'},g));
+ el('circle',{cx:x+w/2,cy:y+5,r:4.5,fill:['#c0392b','#2f6f8f','#d9a441','#5f8a4a','#8a5a7a'][i]},g);
+ g.addEventListener('click',()=>{seen('cards');const [t,s]=CARDS[side][i];sheet(side==='A'?'Side A, card '+(i+1):'Side B, card '+(i+1),s,'',i===4&&side==='B'?'Back upstairs':'Okay')});
+});
+
+// ---------- state ----------
+let side='A',lampOn=true,raining=true,playing=false,busy=false,nb=Math.floor(Math.random()*NOTES.length);
+let marbles=store.get('marbles',0);const seenSet=new Set(store.get('seen',[]));
+
+function paintSide(){
+ CARDS[side].forEach(([t],i)=>cardLabels[i].textContent=t);
+ $('labelT').textContent=side;$('labelS').textContent=side==='A'?'open late':'stairwell waltz';
+ $('labelC').setAttribute('fill',side==='A'?'#d9a441':'#b8433a');
+ $('chalk').setAttribute('opacity',side==='B'?1:0);
+ $('tint').setAttribute('opacity',side==='B'?.13:0);
+}
+function paintLamp(){
+ $('dark').setAttribute('opacity',lampOn?.28:.58);$('light').setAttribute('opacity',lampOn?1:0);
+ $('bulbGlow').setAttribute('opacity',lampOn?.8:0);$('bulb').setAttribute('fill',lampOn?'#ffe7a8':'#6b5a40');
+}
+
+// ---------- caption + sheet ----------
+let capT;const cap=$('caption');
+function say(t){cap.textContent=t;cap.classList.remove('hide');clearTimeout(capT);capT=setTimeout(()=>cap.classList.add('hide'),6500)}
+let onClose=null;
+function sheet(tag,txt,small,btn,cb){$('pTag').textContent=tag;$('pTxt').textContent=txt;$('pSmall').textContent=small||'';$('pSmall').style.display=small?'':'none';$('pBtn').textContent=btn||'Okay';onClose=cb||null;$('sheet').classList.add('open')}
+function closeSheet(){$('sheet').classList.remove('open');const f=onClose;onClose=null;if(f)f()}
+$('pBtn').addEventListener('click',closeSheet);
+$('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet()});
+
+// ---------- hints ----------
+const HINTS={rec:[150,700],arm:[266,712],lamp:[472,540],win:[118,150],cards:[392,150],jar:[389,420],book:[482,790]};
+const hintEls={};
+for(const k in HINTS){if(seenSet.has(k))continue;const [x,y]=HINTS[k];const g=el('g',{},$('hints'));el('circle',{cx:x,cy:y,r:9,fill:'rgba(255,214,140,.25)',class:'hint'},g);el('circle',{cx:x,cy:y,r:4,fill:'rgba(255,226,170,.95)',class:'hint'},g);hintEls[k]=g}
+function seen(k){if(hintEls[k]){hintEls[k].remove();delete hintEls[k]}if(!seenSet.has(k)){seenSet.add(k);store.set('seen',[...seenSet])}}
+
+// ---------- sound (only after a tap on the tonearm) ----------
+const MEL={
+ A:{name:'Open Late',bpm:72,lead:[[64,1],[67,1],[69,2],[67,1],[64,1],[62,2],[60,1],[62,1],[64,1],[67,1],[64,3],[0,1],[69,1],[72,1],[74,2],[72,1],[69,1],[67,2],[64,1],[67,1],[62,1],[64,1],[60,4]],bass:[[48,4],[45,4],[41,4],[43,4],[48,4],[45,4],[41,4],[43,2],[48,2]]},
+ B:{name:'Stairwell Waltz',bpm:96,lead:[[69,2],[72,1],[71,2],[69,1],[68,3],[64,3],[65,2],[69,1],[67,2],[65,1],[64,6],[69,2],[72,1],[76,2],[74,1],[72,3],[71,3],[69,2],[71,1],[72,2],[71,1],[69,6]],bass:[[45,3],[40,3],[40,3],[40,3],[38,3],[43,3],[45,6],[45,3],[45,3],[41,3],[40,3],[38,3],[40,3],[45,6]]}};
+let ac,master,song,crk,crkGain,endT;
+function audio(){
+ if(!ac){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;ac=new C();master=ac.createGain();master.gain.value=.6;
+  const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2600;const d=ac.createDelay();d.delayTime.value=.24;const fb=ac.createGain();fb.gain.value=.22;const wet=ac.createGain();wet.gain.value=.28;
+  master.connect(lp);lp.connect(ac.destination);lp.connect(d);d.connect(fb);fb.connect(d);d.connect(wet);wet.connect(ac.destination)}
+ if(ac.state==='suspended')ac.resume();return ac}
+function tone(n,t,dur,v,type){const o=ac.createOscillator(),g=ac.createGain(),end=t+Math.max(.7,dur*1.6);o.type=type;o.frequency.value=440*Math.pow(2,(n-69)/12);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.025);g.gain.exponentialRampToValueAtTime(.0004,end);o.connect(g);g.connect(song);o.start(t);o.stop(end+.05)}
+function crackle(){const n=ac.sampleRate*3,b=ac.createBuffer(1,n,ac.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++){let v=(Math.random()*2-1)*.01;if(Math.random()<.0007)v+=(Math.random()*2-1)*.55;d[i]=v}const s=ac.createBufferSource();s.buffer=b;s.loop=true;const f=ac.createBiquadFilter();f.type='bandpass';f.frequency.value=1800;f.Q.value=.6;s.connect(f);f.connect(crkGain);return s}
+function startMusic(){
+ const c=audio();if(!c)return 0;const t0=c.currentTime+1.05,m=MEL[side],spb=60/m.bpm;
+ song=c.createGain();song.gain.value=1;song.connect(master);
+ crkGain=c.createGain();crkGain.gain.setValueAtTime(0,c.currentTime);crkGain.gain.linearRampToValueAtTime(.5,t0-.3);crkGain.connect(master);
+ crk=crackle();crk.start();
+ let t=t0;m.lead.forEach(([n,b])=>{if(n)tone(n,t,b*spb,.15,'triangle');t+=b*spb});
+ let tb=t0;m.bass.forEach(([n,b])=>{tone(n,tb,b*spb,.11,'sine');tb+=b*spb});
+ return (t-c.currentTime)+2.2}
+function stopMusic(){if(!ac)return;const now=ac.currentTime;try{song&&song.gain.setTargetAtTime(0,now,.12);crkGain&&crkGain.gain.setTargetAtTime(0,now,.12);const s=crk;setTimeout(()=>{try{s&&s.stop()}catch(e){}},700)}catch(e){}}
+
+function needleDown(){playing=true;$('arm').classList.add('down');$('recSpin').classList.add('on');$('playLed').setAttribute('fill','#ff5a3c');
+ const len=startMusic();say('Now playing: \u201c'+MEL[side].name+'\u201d, side '+side+'.');
+ clearTimeout(endT);endT=setTimeout(()=>{needleUp();say('The needle lifts itself. That\u2019s the end of the side.')},Math.max(4,len)*1000)}
+function needleUp(){playing=false;clearTimeout(endT);stopMusic();$('arm').classList.remove('down');$('playLed').setAttribute('fill','#3a1a14');setTimeout(()=>{if(!playing)$('recSpin').classList.remove('on')},900)}
+
+// ---------- interactions ----------
+$('armHit').addEventListener('click',()=>{seen('arm');if(busy)return;if(playing){needleUp();say('Needle up. Quiet again.')}else needleDown()});
+$('rec').addEventListener('click',()=>{seen('rec');if(busy)return;if(playing){say('Lift the needle first, then flip the record.');return}
+ busy=true;const f=$('recFlip');f.classList.add('flat');
+ setTimeout(()=>{side=side==='A'?'B':'A';paintSide();f.classList.remove('flat');
+  say(side==='B'?'Side B. The room changes a little when you flip it.':'Back to side A.');setTimeout(()=>busy=false,320)},320)});
+$('lamp').addEventListener('click',()=>{seen('lamp');lampOn=!lampOn;paintLamp();say(lampOn?'Click. Warm again.':'Lamp off. The window does the rest.')});
+$('win').addEventListener('click',()=>{seen('win');raining=!raining;$('rain').classList.toggle('off',!raining);$('glassDrops').classList.toggle('off',!raining);say(raining?'Rain\u2019s back. It\u2019s better with rain.':'The rain stops. Watch the sky for a bit.');if(!raining)setTimeout(shoot,1400)});
+function shoot(){if(raining)return;const x=110+Math.random()*140,y=108+Math.random()*80;const l=el('line',{x1:x,y1:y,x2:x+26,y2:y-14,stroke:'#fff6dc','stroke-width':1.6,'stroke-linecap':'round',class:'shoot'},$('shooting'));setTimeout(()=>l.remove(),1100)}
+setInterval(()=>{if(!raining&&Math.random()<.6)shoot()},3800);
+
+const COLORS=['#e8b04a','#d9653b','#7fb3a8','#c9a0dc','#f2d7a0','#9fc46b','#e48aa0','#6fa0d8','#f0e6d0','#b8433a'];
+const MAXM=30;
+function marblePos(i){const row=Math.floor(i/5),col=i%5;return[362+col*12+(row%2?6:0)+(pr(i+40)-.5)*2,445-row*10.5+(pr(i+70)-.5)*1.5]}
+function addMarble(i,anim){if(i>=MAXM)return;const [x,y]=marblePos(i);const g=el('g',{class:'marble'},$('marbles'));
+ el('circle',{cx:x.toFixed(1),cy:y.toFixed(1),r:5,fill:COLORS[Math.floor(pr(i+11)*COLORS.length)]},g);el('circle',{cx:(x-1.6).toFixed(1),cy:(y-1.8).toFixed(1),r:1.5,fill:'rgba(255,255,255,.6)'},g);
+ if(anim){g.style.transform=`translateY(${(388-y).toFixed(1)}px)`;g.getBoundingClientRect();requestAnimationFrame(()=>requestAnimationFrame(()=>g.style.transform='translateY(0)'))}}
+function tag(){$('jarTag').textContent='kept: '+marbles}
+for(let i=0;i<Math.min(marbles,MAXM);i++)addMarble(i,false);tag();
+$('jar').addEventListener('click',()=>{seen('jar');addMarble(marbles,true);marbles++;store.set('marbles',marbles);tag();
+ say(marbles===1?'The first one. The jar was waiting.':marbles>MAXM?'The jar\u2019s full. It keeps counting anyway: '+marbles+'.':'One more kept moment. That\u2019s '+marbles+' in the jar.')});
+$('book').addEventListener('click',()=>{seen('book');nb=(nb+1)%NOTES.length;sheet('Liner notes, page '+(nb+1),NOTES[nb],'','Close')});
+
+// ---------- start ----------
+paintSide();paintLamp();
+const back=store.get('visited',false);store.set('visited',true);
+sheet(back?'Welcome back':'After hours','This is the B side: a small room where the quiet tracks live.\nTap anything that glows a little.','Nothing plays until you put the needle down. A made-up room, built by Miles.','Come in',()=>say('Try the record. Then try the other side of it.'));
+})();
+</script>
+</body>
+</html>
